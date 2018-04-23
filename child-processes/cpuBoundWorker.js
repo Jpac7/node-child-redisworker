@@ -11,7 +11,7 @@ redisCli.on('connect', function() {
 let cpuBoundTasks = 0;
 
 process.on('message', (m) => {
-    if(m === 'cpu-bound-signal') {
+    if(m === 'signal') {
         cpuBoundTasks++;
         // console.log('message');
     }
@@ -21,19 +21,17 @@ process.on('SIGTERM', () => {
     console.log('SIGTERM');
     redisCli.llen(redisConfig.queue, (err, length) => {
         if(err) {
-            redisCli.quit();
-            return process.exit(1);
+            return exit(1);
         }
 
-        if(cpuBoundTasks === length === 0) {
+        if(length === 0 && length === cpuBoundTasks) {
             console.log('!cpuBoundTasks && length === 0');
-            redisCli.quit();
-            process.exit(0);
+            exit(0);
         } else if(cpuBoundTasks > length) {
             console.log(`Something went wrong cpuBoundTasks (${cpuBoundTasks}) > length (${length})`);
         }
     })
-})
+});
 
 waitForTask();
 
@@ -64,5 +62,10 @@ function factorial(n) {
     }
 
     return n * factorial(n - 1);
+}
+
+function exit(code) {
+    redis.quit();
+    process.exit(code);
 }
 

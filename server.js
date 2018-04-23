@@ -13,7 +13,7 @@ app.get('/', function(req, res) {
     res.status(200).send('Welcome!').end();
 })
 
-app.get('/longtask/:index/:ref', redisWorker, function(req, res) {
+app.get('/longtask/:index/:ref', redisWorker('./child-processes/cpuBoundWorker.js', 1), function(req, res) {
     const index = req.params.index,
         ref = req.params.ref;
 
