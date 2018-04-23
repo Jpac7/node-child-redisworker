@@ -10,30 +10,46 @@ redisCli.on('connect', function() {
 
 let cpuBoundTasks = 0;
 
-waitForTask();
-
 process.on('message', (m) => {
     if(m === 'cpu-bound-signal') {
         cpuBoundTasks++;
-        console.log('message');
+        // console.log('message');
     }
+});
+
+process.on('SIGTERM', () => {
+    console.log('SIGTERM');
+    redisCli.llen(redisConfig.queue, (err, length) => {
+        if(err) {
+            redisCli.quit();
+            return process.exit(1);
+        }
+
+        if(cpuBoundTasks === length === 0) {
+            console.log('!cpuBoundTasks && length === 0');
+            redisCli.quit();
+            process.exit(0);
+        } else if(cpuBoundTasks > length) {
+            console.log(`Something went wrong cpuBoundTasks (${cpuBoundTasks}) > length (${length})`);
+        }
+    })
 })
+
+waitForTask();
 
 function waitForTask() {
 
     redisCli.brpop([redisConfig.queue, 0], (err, reply) => {
         console.log(err, reply);
+        // synchronous task
         let result = performIntensiveTask();
         console.log(`Result ${result}`);
         cpuBoundTasks--;
-        if(!cpuBoundTasks) {
-            
-        }
         waitForTask();
     })
 }
 
-// simulate cpu bound computation --- factorial?!
+// simulate cpu bound computation --- factorials sum
 function performIntensiveTask() {
     let result = 0;
     for(let i = 0; i < 10000; i++) {
