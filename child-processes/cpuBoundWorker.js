@@ -17,6 +17,11 @@ process.on('message', (m) => {
     }
 });
 
+process.on('uncaughtException', err => {
+	console.error(`marketAlertsGenerator::error Uncaught Exception thrown: ${err}`);
+    exit(1);
+});
+
 process.on('SIGTERM', () => {
     console.log('SIGTERM');
     redisCli.llen(redisConfig.queue, (err, length) => {
